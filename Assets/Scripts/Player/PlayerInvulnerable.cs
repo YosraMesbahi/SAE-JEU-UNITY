@@ -1,0 +1,91 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerInvulnerable : MonoBehaviour
+{
+    [SerializeField]
+    private SpriteRenderer spriteRenderer;
+
+    public bool isInvulnerable = false;
+    [SerializeField]
+    private LayerMask layersToIgnoreAfterHit;
+    [SerializeField]
+    private Animator animator;
+
+    [SerializeField]
+    private float invulnerableDuration = 2.5f;
+
+    private List<int> listLayersIndexes = new List<int>();
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        CreateListLayers();
+        ToggleCollisions(gameObject.layer, false);
+    }
+
+    private void CreateListLayers()
+    {
+        for (int i = 0; i < 32; i++)
+        {
+            if (layersToIgnoreAfterHit == (layersToIgnoreAfterHit | (1 << i)))
+            {
+                listLayersIndexes.Add(i);
+            }
+        }
+    }
+
+    public IEnumerator Invulnerable()
+    {
+        isInvulnerable = true;
+        animator.SetTrigger("IsHit");
+        ToggleCollisions(gameObject.layer, isInvulnerable);
+        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+
+        float timeElapsed = 0;
+        float flashTimer = 0f;
+
+        float invincibilityFlashInterval = 0.2f;
+        bool isVisible = true;
+
+        while (timeElapsed < invulnerableDuration)
+        {
+            timeElapsed += Time.deltaTime;
+            flashTimer += Time.deltaTime;
+
+            if (flashTimer >= invincibilityFlashInterval)
+            {
+                if (isVisible)
+                {
+                    spriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+                }
+                else
+                {
+                    spriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+                }
+
+                flashTimer = 0f;
+                isVisible = !isVisible;
+            }
+
+            yield return null;
+        }
+
+        spriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+        isInvulnerable = false;
+        ToggleCollisions(gameObject.layer, isInvulnerable);
+    }
+
+    public void ToggleCollisions(int gameObjectLayer, bool enabled)
+    {
+        foreach (var layerIndex in listLayersIndexes)
+        {
+            Physics2D.IgnoreLayerCollision(
+                gameObjectLayer,
+                layerIndex,
+                enabled
+            );
+        }
+    }
+}

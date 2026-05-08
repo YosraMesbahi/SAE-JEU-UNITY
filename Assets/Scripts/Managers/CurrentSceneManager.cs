@@ -1,0 +1,93 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class CurrentSceneManager : MonoBehaviour
+{
+    public bool isDebugConsoleOpened = false;
+
+    [Header("Listen to events"), SerializeField]
+    private IntEventChannel onLevelEnded;
+    [SerializeField]
+    private BoolEventChannel onDebugConsoleOpenEvent;
+
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+        Time.timeScale = 1f;
+    }
+
+    private void Update() {
+        #if UNITY_EDITOR
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                RestartLevel();
+            }
+        #endif
+    }
+
+    private void OnEnable()
+    {
+        onLevelEnded.OnEventRaised += LoadScene;
+        onDebugConsoleOpenEvent.OnEventRaised += OnDebugConsoleOpen;
+    }
+
+    #if UNITY_EDITOR
+    public void LoadScene(SceneAsset sceneToLoad)
+    {
+        if (UtilsScene.DoesSceneExist(sceneToLoad.name))
+        {
+            SceneManager.LoadScene(sceneToLoad.name);
+        }
+        else
+        {
+            Debug.Log($"Unknown scene named {sceneToLoad.name}. Please add the scene to the build settings.");
+        }
+    }
+    #endif
+
+    public void LoadScene(int sceneIndex)
+    {
+        if (UtilsScene.DoesSceneExist(sceneIndex))
+        {
+            SceneManager.LoadScene(sceneIndex);
+        }
+        else
+        {
+            Debug.Log($"Unknown scene with index {sceneIndex}. Please add the scene to the build settings.");
+        }
+    }
+
+    public void RestartLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public static void RestartLastCheckpoint()
+    {
+        Debug.Log("RestartLastCheckpoint");
+    }
+
+    public static void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    private void OnDisable()
+    {
+        onLevelEnded.OnEventRaised -= LoadScene;
+        onDebugConsoleOpenEvent.OnEventRaised -= OnDebugConsoleOpen;
+    }
+
+    private void OnDebugConsoleOpen(bool debugConsoleOpened)
+    {
+        isDebugConsoleOpened = debugConsoleOpened;
+    }
+}
