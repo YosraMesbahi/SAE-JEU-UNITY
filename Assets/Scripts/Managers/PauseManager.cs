@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
 {
@@ -9,6 +11,10 @@ public class PauseManager : MonoBehaviour
 
     [Header("Listen to event channels"), SerializeField]
     private BoolEventChannel onDebugConsoleOpenEvent;
+    
+    [Header("Buttons")]
+    [SerializeField] private Button restartButton;
+    [SerializeField] private Button mainMenuButton;
 
     bool isGamePaused = false;
     bool isDebugConsoleEnabled = false;
@@ -21,6 +27,19 @@ public class PauseManager : MonoBehaviour
     private void OnEnable()
     {
         onDebugConsoleOpenEvent.OnEventRaised += TogglePauseDebug;
+    }
+
+    private void Start() 
+    {
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(RestartLevel);
+        }
+        
+        if (mainMenuButton != null)
+        {
+            mainMenuButton.onClick.AddListener(GoToMainMenu);
+        }
     }
 
     void Update()
@@ -73,6 +92,18 @@ public class PauseManager : MonoBehaviour
         {
             Pause(false);
         }
+    }
+
+    private void RestartLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void OnDisable()
